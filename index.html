@@ -1,0 +1,393 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+	<meta charset="UTF-8" />
+    <title>Made by Phaser</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+         @font-face {
+            font-family: 'CubanoRegular';
+            src: url('fonts/cubano-regular-webfont.eot');
+            src: url('fonts/cubano-regular-webfont.eot?#iefix') format('embedded-opentype'),
+                 url('fonts/cubano-regular-webfont.woff') format('woff'),
+                 url('fonts/cubano-regular-webfont.ttf') format('truetype'),
+                 url('fonts/cubano-regular-webfont.svg#CubanoRegular') format('svg');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'arconregular';
+            src: url('fonts/1/arcon-regular-webfont.woff2') format('woff2'),
+            url('fonts/1/arcon-regular-webfont.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var game = new Phaser.Game(667, 345, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
+function preload() {
+    //JP be4 changes
+    game.load.image('startBG', 'assets/pics/startBG1.png');
+    game.load.image('overBG', 'assets/pics/overBG1.png');
+    game.load.image('winBG', 'assets/pics/winBG1.png');
+    game.load.image('wall', 'assets/wall.png');
+    game.load.image('flower', 'assets/pics/flower1.png');
+    game.load.image('winHome', 'assets/pics/winHome.png');
+    game.load.spritesheet('dude', 'assets/pics/bFinal1.png', 80.8, 90);
+
+    //JP changed
+    game.load.image('invader', 'assets/pics/invader1.png');
+    game.load.image('gameBG', 'assets/pics/gameBG1.png');
+
+    //game.load.image('bullet', 'assets/bullet.png');
+    game.load.image('ground', 'assets/platform.png');
+    game.load.audio('music', 'assets/123.mp3');
+}
+
+var player;
+var platforms;
+var cursors;
+var mouseclick;
+
+var stars;
+var starTime = 0;
+
+var home;
+
+var score = 0;
+var scoreText;
+
+//JP chaged
+var gameBG;
+
+var invaders;
+var invaderTime = 0;
+
+var choiceText;
+var choice;
+//for timer
+var counterText;
+var delaycounter = 0;
+var delaycounterText;
+
+//for fire
+var fireButton;
+var firedButton;
+
+//for time
+var counterTime = 0;
+
+//for text
+var startText;
+var overText;
+var winText;
+//for BG
+var startBG;
+var overBG;
+var winBG;
+var endScore = 0;
+var music;
+
+function create() {
+    //  We're going to be using physics, so enable the Arcade Physics system
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+
+    //  A simple background for our game
+    //  The scrolling gameBG1 background
+    gameBG = game.add.tileSprite(0, 0, 667, 345, 'gameBG');
+    
+    // music = new Phaser.Sound(game, 'music', 1, true);
+    music = game.add.audio('music');
+    music.loop = true;
+    music.play();
+
+    //  The platforms group contains the ground and the 2 ledges we can jump on
+    platforms = game.add.group();
+
+    //  We will enable physics for any object that is created in this group
+    platforms.enableBody = true;
+
+    // Here we create the ground.
+    var wall = platforms.create(-65, 0, 'wall');
+    //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
+    wall.scale.setTo(2, 2);
+    //  This stops it from falling away when you jump on it
+    wall.body.immovable = true;
+
+    // The player and its settings
+    player = game.add.sprite(32, game.world.height - 120, 'dude');
+    //scale the player 2 times bigger
+    player.scale.setTo(1,1);
+    //  We need to enable physics on the player
+    game.physics.arcade.enable(player);
+    //  Player physics properties. Give the little guy a slight bounce.
+    player.body.bounce.y = 0.2;
+    player.body.gravity.y = 800;
+    player.body.collideWorldBounds = true;
+    //  Our two animations, walking left and right.
+    player.animations.add('right', [0, 1, 2, 3, 4, 5, 6], 10, true);
+
+    //winHome
+    home = game.add.sprite(game.world.width+50, game.world.height - 240, 'winHome');
+    home.scale.setTo(2,2);
+    game.physics.arcade.enable(home,Phaser.Physics.ARCADE);
+
+    //for start page
+    overBG = game.add.tileSprite(0, 0, 800, 600, 'overBG');
+    overBG.anchor.setTo(0, 0);
+    overBG.visible = false;
+
+    //for start page
+    winBG = game.add.tileSprite(0, 0, 800, 600, 'winBG');
+    winBG.anchor.setTo(0, 0);
+    winBG.visible = false;
+
+    //for start page
+    startBG = game.add.tileSprite(0,0, 667, 345, 'startBG');
+    startBG.anchor.setTo(0,0);
+    
+    startBG.visible = true;
+
+    //  The text
+    scoreText = game.add.text(16, 16, 'Score: 0', { font: '28px CubanoRegular', fill: '#ffd800' });
+
+    //counterText = game.add.text(16, 48, 'Counter: 0', { fontSize: '32px', fill: '#ffffff' });
+
+    //delaycounterText = game.add.text(16, 80, 'Choice: 0', { fontSize: '32px', fill: '#ffffff' });
+
+    overText = game.add.text(game.world.centerX , game.world.centerY,'', { font: '38px arconregular', fill: '#ffffff' });
+    overText.anchor.setTo(-0.8, -2);
+    overText.visible = false;
+
+    winText = game.add.text(game.world.centerX , game.world.centerY,'', { font: '34px arconregular', fill: '#ffffff' });
+    winText.anchor.setTo(-0.7, -2);
+    winText.visible = false;
+
+    startText = game.add.text(game.world.centerX , game.world.centerY,'PLAY NOW', { font: '34px arconregular', fill: '#ffffff' });
+    startText.anchor.setTo(-0.8, -2);
+    startText.visible = true;
+    //  Our controls.
+    cursors = game.input.keyboard.createCursorKeys();
+    //mouseclick = game.input.onTap.add(tapJump, this);
+    //enemy
+    fireButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+    firedButton = game.input.keyboard.addKey(Phaser.Keyboard.S);
+
+    //  Our star group
+    stars = game.add.group();
+    stars.enableBody = true;
+    stars.physicsBodyType = Phaser.Physics.ARCADE;
+    stars.createMultiple(30, 'flower');
+    stars.setAll('anchor.x', 0.5);
+    stars.setAll('anchor.y', 0.5);
+
+    invaders = game.add.group();
+    invaders.enableBody = true;
+    invaders.physicsBodyType = Phaser.Physics.ARCADE;
+    invaders.createMultiple(30, 'invader');
+    invaders.setAll('anchor.x', 0.5);
+    invaders.setAll('anchor.y', 1);
+    // player.setAll('checkWorldBounds', true);
+
+}
+
+function collectStars (player, stars) {
+    // Removes the star from the screen
+    stars.kill();
+    //  Add and update the score
+    score += 10;
+    //updating score
+    scoreText.text = 'Score: ' + score;
+}
+
+function hitinvader (player, invaders) {
+    // Removes the star from the screen
+    invaders.kill();
+    //  Add and update the score
+    // score -= 1;
+    scoreText.text = 'Score: ' + score;
+    //When the player dies
+    //player.kill();
+    stars.callAll('kill');
+    home.kill();
+    overText.text=" Restart";
+    overText.visible = true;
+    overBG.visible = true;
+    music.pause();
+    //the "click to restart" handler
+    if (overText.visible){
+        game.input.onTap.addOnce(restartWin,this);
+    }
+}
+
+function hitHome (player, home) {
+    home.kill();
+    winText.text = " Play Again";
+    winText.visible = true;
+    winBG.visible = true;
+    overBG.visible = false;
+    overText.visible = false;
+    //kill all the invaders when winning
+    //the "click to restart"
+    game.input.onTap.addOnce(restartWin,this);
+}
+function resetStar (star, platforms) {
+    //  Called if the star hit the platform (left)
+    star.kill();
+}
+
+function resetInvader (invader, platforms) {
+    //  Called if the invader hit the platform (left)
+    invader.kill();
+}
+function resetHome (home, platforms){
+    home.kill();
+}
+//let the invader go functions
+function fireInvader(){
+        if (game.time.now > invaderTime){
+        //  Grab the first invader we can from the pool
+        invader = invaders.getFirstExists(false);
+        if (invader){
+            //  And fire it
+            invader.reset(game.world.width+50, game.world.height-5);
+            invader.body.velocity.x = -400;
+            //in case of firing too many at once
+            invaderTime = game.time.now + 1200;
+        }
+    }
+}
+
+function fireStar(){
+        if (game.time.now > starTime){
+        //  Grab the first star we can from the pool
+        star = stars.getFirstExists(false);
+
+        if (star){
+            //  And fire it
+            star.reset(game.world.width+50, player.y+45);
+            star.body.velocity.x = -400;
+            //in case of firing too many at once
+            starTime = game.time.now + 600;
+        }
+    }
+}
+
+function fireHome(){
+    home.body.velocity.x = -400;
+}
+
+function restart () {
+    //hide the restart text
+    overText.visible = false;
+    winText.visible = false;
+    overBG.visible = false;
+    winBG.visible = false;
+    score = 0;
+    scoreText.text = 'Score: ' + score;
+    }
+function restartWin (){
+    //hide the restart text
+    overText.visible = false;
+    winText.visible = false;
+    overBG.visible = false;
+    winBG.visible = false;
+    score = 0;
+    scoreText.text = 'Score: ' + score;
+    music.resume();
+    home = game.add.sprite(game.world.width+50, game.world.height - 240, 'winHome');
+    home.scale.setTo(2,2);
+    game.physics.arcade.enable(home,Phaser.Physics.ARCADE);
+}
+function gamestart(){
+    startBG.visible = false;
+    startText.visible = false;
+}
+
+function update() {
+    //choice randoms between 1~5
+    if (game.time.now > counterTime){
+        choice = Math.floor((Math.random() * 3) + 1); 
+        //things comes our every 0.5 sec
+        counterTime = game.time.now + 600;
+    }
+
+    if (score >= 50){
+            endScore = Math.floor((Math.random() * 5)+1); 
+            if(endScore == 1){
+                fireHome();
+            }
+    }
+    else {
+        endScore = 0;
+    }
+
+    if (game.input.activePointer.isDown  && player.body.blocked.down && overBG.visible == false && startBG.visible == false && winBG.visible ==false ){
+        player.body.velocity.y = -500;
+    }
+    else if (game.input.activePointer.isDown  && startBG.visible == true){
+        gamestart();
+    }
+    //press space to jump
+    if (fireButton.isDown  && player.body.blocked.down ){
+        player.body.velocity.y = -500;
+    }
+
+    //  Scroll the background
+    gameBG.tilePosition.x -= 2;
+    //JP changed player running right always
+    player.animations.play('right');
+    
+    //JP allow player go down faster
+    if (cursors.down.isDown && !(player.body.touching.down))
+    {
+        player.body.velocity.y += 5;
+    }
+    
+    //  Checks to see if the player overlaps with stars, if he does call the collectStar function
+    game.physics.arcade.overlap(player, stars, collectStars, null, this);
+    //  Checks to see if the player overlaps with invader, if he does call the hitinvader function
+    game.physics.arcade.overlap(player, invaders, hitinvader, null, this);
+
+    game.physics.arcade.overlap(player, home, hitHome, null, this);
+
+    game.physics.arcade.overlap(home, platforms, hitHome, null, this);
+    //if star hits platform, kill it
+    game.physics.arcade.overlap(stars, platforms, resetStar, null, this);
+
+    game.physics.arcade.overlap(invaders, platforms, resetInvader, null, this);
+
+    if ((choice == 1)){
+        if (overBG.visible == false && startBG.visible == false && winBG.visible ==false  && home.body.x >= game.world.width ){
+            fireInvader();
+        }
+    }
+    if ((choice == 2) || fireButton.isDown || firedButton.isDown){
+        if (overBG.visible == false && startBG.visible == false && winBG.visible ==false  && home.body.x >= game.world.width ){
+            fireStar();
+        }
+    }
+    if (winBG.visible == true){
+        invaders.callAll('kill');
+        stars.callAll('kill');
+    }
+    if (overBG.visible == true){
+        invaders.callAll('kill');
+        stars.callAll('kill');
+    }
+    
+    //delaycounterText.text = 'Choice: ' + choice;
+}
+
+</script>
+
+</body>
+</html>
